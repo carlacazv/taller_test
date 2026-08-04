@@ -1,0 +1,13 @@
+{
+  "arm": "e2e-only",
+  "layers": ["e2e"],
+  "realisticMutantsDetected": 8,
+  "ceiling": 12,
+  "missedMutants": ["M03", "M04", "M06", "M08"],
+  "medianMs": 187.6,
+  "relativeCost": 1.21,
+  "verdict": "REJECTED",
+  "doNotMerge": true,
+  "reason": "This arm loses domain-boundary, shipping, quantity-validation, and authorization-removal guardians.",
+  "trackingIssue": 2
+}
