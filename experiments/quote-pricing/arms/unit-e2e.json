@@ -1,0 +1,13 @@
+{
+  "arm": "unit-e2e",
+  "layers": ["unit", "e2e"],
+  "realisticMutantsDetected": 11,
+  "ceiling": 12,
+  "missedMutants": ["M08"],
+  "medianMs": 330.97,
+  "relativeCost": 2.13,
+  "verdict": "REJECTED",
+  "doNotMerge": true,
+  "reason": "This arm loses the authorization-guard removal defect that is exclusively detected by the integration layer.",
+  "trackingIssue": 2
+}
