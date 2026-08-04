@@ -30,7 +30,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git fetch /tmp/repository.bundle main:refs/remotes/bundle/main
+          git fetch /tmp/repository.bundle refs/heads/main:refs/remotes/bundle/main
           actual_sha="$(git rev-parse refs/remotes/bundle/main)"
           expected_sha="5caf8fb08e2de5d46ebdf991f3c994d92586d035"
           echo "Preserved head: ${actual_sha}"
