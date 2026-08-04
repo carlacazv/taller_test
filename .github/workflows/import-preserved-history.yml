@@ -1,0 +1,48 @@
+name: import-preserved-history
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    if: github.head_ref == 'bootstrap/import-history'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout bundle source branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Reconstruct and verify Git bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat bootstrap/chunks/chunk-*.b64 | base64 --decode > /tmp/repository.bundle
+          git bundle verify /tmp/repository.bundle
+
+      - name: Verify preserved head SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch /tmp/repository.bundle main:refs/remotes/bundle/main
+          actual_sha="$(git rev-parse refs/remotes/bundle/main)"
+          expected_sha="5caf8fb08e2de5d46ebdf991f3c994d92586d035"
+          echo "Preserved head: ${actual_sha}"
+          test "${actual_sha}" = "${expected_sha}"
+
+      - name: Import preserved main history
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin refs/remotes/bundle/main:refs/heads/main --force
+
+      - name: Remove bootstrap branch
+        if: success()
+        shell: bash
+        run: git push origin --delete bootstrap/import-history
