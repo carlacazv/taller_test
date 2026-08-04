@@ -1,0 +1,13 @@
+{
+  "arm": "integration-only",
+  "layers": ["integration"],
+  "realisticMutantsDetected": 7,
+  "ceiling": 12,
+  "missedMutants": ["M03", "M04", "M06", "M11", "M12"],
+  "medianMs": 220.62,
+  "relativeCost": 1.42,
+  "verdict": "REJECTED",
+  "doNotMerge": true,
+  "reason": "This arm loses domain-boundary, shipping, quantity-validation, page-composition, and browser-wiring guardians.",
+  "trackingIssue": 2
+}
