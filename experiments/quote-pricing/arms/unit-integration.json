@@ -1,0 +1,13 @@
+{
+  "arm": "unit-integration",
+  "layers": ["unit", "integration"],
+  "realisticMutantsDetected": 10,
+  "ceiling": 12,
+  "missedMutants": ["M11", "M12"],
+  "medianMs": 371.51,
+  "relativeCost": 2.39,
+  "verdict": "REJECTED",
+  "doNotMerge": true,
+  "reason": "This arm loses the page-composition and browser-to-endpoint wiring guardians that only the E2E layer detects.",
+  "trackingIssue": 2
+}
