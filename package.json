@@ -1,0 +1,24 @@
+{
+  "name": "trims-mutation-layer-lab",
+  "version": "1.0.0",
+  "description": "A zero-dependency empirical laboratory for evaluating test layers with TRIMS and mutation testing.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "check": "node scripts/check-syntax.mjs",
+    "dev": "node src/server.js",
+    "test:unit": "node --test tests/unit/*.test.js",
+    "test:integration": "node --test tests/integration/*.test.js",
+    "test:e2e": "node --test tests/e2e/*.test.js",
+    "test": "npm run check && npm run test:unit && npm run test:integration && npm run test:e2e",
+    "mutation:automated": "node scripts/run-automated-mutation.mjs",
+    "audit:manual": "node scripts/run-manual-mutants.mjs",
+    "benchmark": "node scripts/benchmark-layers.mjs",
+    "experiment": "npm test && npm run mutation:automated && npm run audit:manual && npm run benchmark",
+    "test:browser": "node --test tests/browser/*.test.js",
+    "test:ci": "npm test && REQUIRE_BROWSER=1 npm run test:browser"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
