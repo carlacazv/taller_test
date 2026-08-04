@@ -1,0 +1,13 @@
+{
+  "arm": "integration-e2e",
+  "layers": ["integration", "e2e"],
+  "realisticMutantsDetected": 9,
+  "ceiling": 12,
+  "missedMutants": ["M03", "M04", "M06"],
+  "medianMs": 412.67,
+  "relativeCost": 2.66,
+  "verdict": "REJECTED",
+  "doNotMerge": true,
+  "reason": "This arm loses the inclusive shipping boundary, shipping fee, and quantity-validation guardians that are exclusively detected by unit tests.",
+  "trackingIssue": 2
+}
