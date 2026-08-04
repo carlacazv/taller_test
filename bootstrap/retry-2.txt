@@ -1,0 +1,1 @@
+Retry preserved history import after resolving the full bundle ref.
