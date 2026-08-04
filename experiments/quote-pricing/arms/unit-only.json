@@ -1,0 +1,13 @@
+{
+  "arm": "unit-only",
+  "layers": ["unit"],
+  "realisticMutantsDetected": 6,
+  "ceiling": 12,
+  "missedMutants": ["M07", "M08", "M09", "M10", "M11", "M12"],
+  "medianMs": 155.39,
+  "relativeCost": 1.0,
+  "verdict": "REJECTED",
+  "doNotMerge": true,
+  "reason": "This arm loses authorization, HTTP contract, page composition, and browser wiring guardians.",
+  "trackingIssue": 2
+}
