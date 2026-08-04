@@ -26,23 +26,29 @@ jobs:
           cat bootstrap/chunks/chunk-*.b64 | base64 --decode > /tmp/repository.bundle
           git bundle verify /tmp/repository.bundle
 
-      - name: Verify preserved head SHA
+      - name: Clone and verify preserved history
         shell: bash
         run: |
           set -euo pipefail
-          git fetch /tmp/repository.bundle refs/heads/main:refs/remotes/bundle/main
-          actual_sha="$(git rev-parse refs/remotes/bundle/main)"
+          git clone /tmp/repository.bundle /tmp/imported
+          actual_sha="$(git -C /tmp/imported rev-parse HEAD)"
           expected_sha="5caf8fb08e2de5d46ebdf991f3c994d92586d035"
           echo "Preserved head: ${actual_sha}"
           test "${actual_sha}" = "${expected_sha}"
 
       - name: Import preserved main history
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          git push origin refs/remotes/bundle/main:refs/heads/main --force
+          git -C /tmp/imported remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git -C /tmp/imported push origin main:main --force
 
       - name: Remove bootstrap branch
         if: success()
         shell: bash
-        run: git push origin --delete bootstrap/import-history
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git -C /tmp/imported push origin --delete bootstrap/import-history
