@@ -18,7 +18,7 @@
     "test:e2e:allure": "node --test --test-reporter spec --test-reporter-destination stdout --test-reporter allure-node-test/reporter --test-reporter-destination stdout tests/e2e/*.test.js",
     "test:browser:allure": "node --test --test-reporter spec --test-reporter-destination stdout --test-reporter allure-node-test/reporter --test-reporter-destination stdout tests/browser/*.test.js",
     "test:allure": "npm run test:unit:allure && npm run test:integration:allure && npm run test:e2e:allure && npm run test:browser:allure",
-    "report:allure": "allure generate allure-results --clean --output allure-report",
+    "report:allure": "allure generate allure-results",
     "compare:layers": "node scripts/compare-test-layers.mjs"
   },
   "engines": {
