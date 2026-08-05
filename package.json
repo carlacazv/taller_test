@@ -10,15 +10,23 @@
     "test:unit": "node --test tests/unit/*.test.js",
     "test:integration": "node --test tests/integration/*.test.js",
     "test:e2e": "node --test tests/e2e/*.test.js",
-    "test": "npm run check && npm run test:unit && npm run test:integration && npm run test:e2e",
-    "mutation:automated": "node scripts/run-automated-mutation.mjs",
-    "audit:manual": "node scripts/run-manual-mutants.mjs",
-    "benchmark": "node scripts/benchmark-layers.mjs",
-    "experiment": "npm test && npm run mutation:automated && npm run audit:manual && npm run benchmark",
     "test:browser": "node --test tests/browser/*.test.js",
-    "test:ci": "npm test && REQUIRE_BROWSER=1 npm run test:browser"
+    "test": "npm run check && npm run test:unit && npm run test:integration && npm run test:e2e",
+    "test:ci": "npm test && REQUIRE_BROWSER=1 npm run test:browser",
+    "test:unit:allure": "node --test --test-reporter spec --test-reporter-destination stdout --test-reporter allure-node-test/reporter --test-reporter-destination stdout tests/unit/*.test.js",
+    "test:integration:allure": "node --test --test-reporter spec --test-reporter-destination stdout --test-reporter allure-node-test/reporter --test-reporter-destination stdout tests/integration/*.test.js",
+    "test:e2e:allure": "node --test --test-reporter spec --test-reporter-destination stdout --test-reporter allure-node-test/reporter --test-reporter-destination stdout tests/e2e/*.test.js",
+    "test:browser:allure": "node --test --test-reporter spec --test-reporter-destination stdout --test-reporter allure-node-test/reporter --test-reporter-destination stdout tests/browser/*.test.js",
+    "test:allure": "npm run test:unit:allure && npm run test:integration:allure && npm run test:e2e:allure && npm run test:browser:allure",
+    "report:allure": "allure generate allure-results --clean --output allure-report",
+    "compare:layers": "node scripts/compare-test-layers.mjs"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "allure": "3.14.3",
+    "allure-js-commons": "3.10.2",
+    "allure-node-test": "3.10.2"
   }
 }
