@@ -1,0 +1,113 @@
+name: Consolidated Allure Report
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+concurrency:
+  group: consolidated-allure-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  allure:
+    name: All test layers / Node 24
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Resolve Chromium executable
+        shell: bash
+        run: |
+          set -euo pipefail
+          browser_path="$(command -v chromium || command -v chromium-browser || command -v google-chrome || command -v google-chrome-stable || true)"
+          if [[ -z "$browser_path" ]]; then
+            echo "::error::No Chromium-compatible browser was found on the runner."
+            exit 1
+          fi
+          echo "CHROMIUM_PATH=$browser_path" >> "$GITHUB_ENV"
+          "$browser_path" --version
+
+      - name: Prepare consolidated evidence directories
+        run: |
+          rm -rf allure-results allure-report
+          mkdir -p reports
+
+      - name: Run every test layer with Allure
+        id: tests
+        continue-on-error: true
+        env:
+          REQUIRE_BROWSER: "1"
+          ALLURE_NODE_TEST_CONFIG: >-
+            {"resultsDir":"allure-results","globalLabels":{"repository":"${{ github.repository }}","launch":"all-layers"},"environmentInfo":{"node":"24","runner":"ubuntu-latest","commit":"${{ github.sha }}"}}
+        shell: bash
+        run: |
+          set -o pipefail
+          (
+            status=0
+            npm run test:unit:allure || status=1
+            npm run test:integration:allure || status=1
+            npm run test:e2e:allure || status=1
+            npm run test:browser:allure || status=1
+            exit "$status"
+          ) 2>&1 | tee reports/all-test-layers.log
+
+      - name: Generate consolidated Allure HTML report
+        if: always()
+        run: npm run report:allure
+
+      - name: Add Allure summary to pull request
+        if: always() && github.event_name == 'pull_request'
+        uses: allure-framework/allure-action@v0
+        with:
+          report-directory: ./allure-report
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          sections: |
+            new
+            flaky
+
+      - name: Upload consolidated Allure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: consolidated-allure-report-${{ github.run_number }}
+          path: |
+            allure-results
+            allure-report
+            reports/all-test-layers.log
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Write consolidated report summary
+        if: always()
+        run: |
+          {
+            echo "## Consolidated Allure report"
+            echo ""
+            echo "- Includes unit, integration, system E2E, and browser E2E results."
+            echo "- Raw execution log: \`reports/all-test-layers.log\`"
+            echo "- Download the \`consolidated-allure-report-${{ github.run_number }}\` artifact to open the HTML report."
+            echo "- Combined test outcome: \`${{ steps.tests.outcome }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Preserve combined test failure
+        if: steps.tests.outcome == 'failure'
+        run: exit 1
