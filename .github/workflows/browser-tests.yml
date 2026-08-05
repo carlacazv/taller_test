@@ -1,0 +1,94 @@
+name: Browser E2E Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: browser-e2e-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    name: Browser E2E / Node 24
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Resolve Chromium executable
+        shell: bash
+        run: |
+          set -euo pipefail
+          browser_path="$(command -v chromium || command -v chromium-browser || command -v google-chrome || command -v google-chrome-stable || true)"
+          if [[ -z "$browser_path" ]]; then
+            echo "::error::No Chromium-compatible browser was found on the runner."
+            exit 1
+          fi
+          echo "CHROMIUM_PATH=$browser_path" >> "$GITHUB_ENV"
+          "$browser_path" --version
+
+      - name: Prepare evidence directories
+        run: |
+          rm -rf allure-results allure-report
+          mkdir -p reports
+
+      - name: Run browser E2E tests with Allure
+        id: tests
+        continue-on-error: true
+        env:
+          REQUIRE_BROWSER: "1"
+          ALLURE_NODE_TEST_CONFIG: >-
+            {"resultsDir":"allure-results","globalLabels":{"layer":"browser-e2e","repository":"${{ github.repository }}"},"environmentInfo":{"node":"24","runner":"ubuntu-latest"}}
+        run: |
+          set -o pipefail
+          npm run test:browser:allure 2>&1 | tee reports/browser-tests.log
+
+      - name: Generate Allure HTML report
+        if: always()
+        run: npm run report:allure
+
+      - name: Upload browser E2E evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-e2e-evidence-${{ github.run_number }}
+          path: |
+            allure-results
+            allure-report
+            reports/browser-tests.log
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Write browser E2E summary
+        if: always()
+        run: |
+          {
+            echo "## Browser E2E evidence"
+            echo ""
+            echo "- Browser: \`$CHROMIUM_PATH\`"
+            echo "- Test command: \`npm run test:browser:allure\`"
+            echo "- Raw log: \`reports/browser-tests.log\`"
+            echo "- Allure results and HTML report are attached to this workflow run."
+            echo "- Test outcome: \`${{ steps.tests.outcome }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Preserve browser E2E failure
+        if: steps.tests.outcome == 'failure'
+        run: exit 1
