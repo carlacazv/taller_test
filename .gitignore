@@ -1,5 +1,7 @@
 node_modules/
 coverage/
-reports/tmp/
+reports/
+allure-results/
+allure-report/
 .env
 .DS_Store
