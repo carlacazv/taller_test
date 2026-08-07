@@ -103,11 +103,12 @@ function runLayer(layer, phase, runNumber) {
   });
   const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
   const output = `${result.stdout || ""}${result.stderr || ""}`;
+  const logName = phase === "warmup"
+    ? `${layer.id}-warmup-${String(runNumber).padStart(2, "0")}.tap`
+    : `${layer.id}-run-${String(runNumber).padStart(2, "0")}.tap`;
+  const logPath = path.join(rawDirectory, logName);
 
-  if (phase === "measured") {
-    const logName = `${layer.id}-run-${String(runNumber).padStart(2, "0")}.tap`;
-    writeFileSync(path.join(rawDirectory, logName), output, "utf8");
-  }
+  writeFileSync(logPath, output, "utf8");
 
   return {
     exitCode: result.status ?? 1,
@@ -117,7 +118,8 @@ function runLayer(layer, phase, runNumber) {
     failed: parseMetric(output, "fail"),
     skipped: parseMetric(output, "skipped"),
     cancelled: parseMetric(output, "cancelled"),
-    todo: parseMetric(output, "todo")
+    todo: parseMetric(output, "todo"),
+    logPath: path.relative(root, logPath)
   };
 }
 
@@ -127,7 +129,7 @@ for (const layer of layers) {
   for (let warmup = 1; warmup <= warmups; warmup += 1) {
     const result = runLayer(layer, "warmup", warmup);
     if (result.exitCode !== 0) {
-      throw new Error(`${layer.label} warmup failed with exit code ${result.exitCode}`);
+      throw new Error(`${layer.label} warmup failed with exit code ${result.exitCode}. Evidence: ${result.logPath}`);
     }
   }
 
@@ -190,7 +192,8 @@ const markdownLines = [
     `### ${layer.label}`,
     "",
     ...layer.testFiles.map((testFile) => `- \`${testFile.file}\` — SHA-256 \`${testFile.sha256}\``),
-    `- Raw TAP logs: \`reports/test-layer-comparison/raw/${layer.id}-run-*.tap\``,
+    `- Warmup TAP logs: \`reports/test-layer-comparison/raw/${layer.id}-warmup-*.tap\``,
+    `- Measured TAP logs: \`reports/test-layer-comparison/raw/${layer.id}-run-*.tap\``,
     ""
   ]),
   "## Interpretation boundary",
