@@ -33,11 +33,11 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Resolve Chromium executable
+      - name: Resolve Chromium-compatible browser
         shell: bash
         run: |
           set -euo pipefail
-          browser_path="$(command -v chromium || command -v chromium-browser || command -v google-chrome || command -v google-chrome-stable || true)"
+          browser_path="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
           if [[ -z "$browser_path" ]]; then
             echo "::error::No Chromium-compatible browser was found on the runner."
             exit 1
