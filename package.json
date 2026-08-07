@@ -1,7 +1,7 @@
 {
-  "name": "trims-mutation-layer-lab",
+  "name": "test-layer-lab",
   "version": "1.0.0",
-  "description": "A zero-dependency empirical laboratory for evaluating test layers with TRIMS and mutation testing.",
+  "description": "An evidence-driven laboratory for comparing test-layer cost, defect detection, and confidence.",
   "type": "module",
   "license": "MIT",
   "scripts": {
