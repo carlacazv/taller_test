@@ -1,0 +1,121 @@
+name: Evidence Pages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: evidence-pages-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build verified evidence site
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Resolve Chromium-compatible browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          browser_path="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [[ -z "$browser_path" ]]; then
+            echo "::error::No Chromium-compatible browser was found on the runner."
+            exit 1
+          fi
+          echo "CHROMIUM_PATH=$browser_path" >> "$GITHUB_ENV"
+          "$browser_path" --version
+
+      - name: Run all test layers with Allure
+        env:
+          REQUIRE_BROWSER: "1"
+          ALLURE_NODE_TEST_CONFIG: >-
+            {"resultsDir":"allure-results","globalLabels":{"repository":"${{ github.repository }}","launch":"evidence-pages"},"environmentInfo":{"node":"24","runner":"ubuntu-latest","commit":"${{ github.sha }}"}}
+        run: npm run test:allure
+
+      - name: Generate consolidated Allure report
+        run: npm run report:allure
+
+      - name: Generate runtime and traceability comparison
+        env:
+          COMPARISON_ITERATIONS: "5"
+          COMPARISON_WARMUPS: "1"
+        run: npm run compare:layers
+
+      - name: Assemble verified static site
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir -p _site/evidence _site/allure
+          cp -R site/. _site/
+          cp reports/test-layer-comparison/comparison.json _site/evidence/runtime-comparison.json
+          cp reports/test-layer-comparison/comparison.md _site/evidence/runtime-comparison.md
+          cp -R allure-report/. _site/allure/
+          cp docs/quote-pricing/dominant-configuration.md _site/evidence/dominant-configuration.md
+          touch _site/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+      - name: Upload reproducibility evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: pages-evidence-${{ github.run_number }}
+          path: |
+            reports/test-layer-comparison
+            allure-results
+            allure-report
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Write evidence summary
+        run: |
+          {
+            echo "## Evidence Pages build"
+            echo ""
+            echo "- All four test layers passed before the site artifact was created."
+            echo "- Runtime evidence was regenerated from this commit."
+            echo "- The consolidated Allure HTML report is embedded under \`/allure/\`."
+            echo "- Raw comparison and Allure evidence are retained as workflow artifacts."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Deploy GitHub Pages
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Deploy verified site
+        id: deployment
+        uses: actions/deploy-pages@v4
