@@ -1,0 +1,80 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: integration-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration:
+    name: Integration / Node 24
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Prepare evidence directories
+        run: |
+          rm -rf allure-results allure-report
+          mkdir -p reports
+
+      - name: Run integration tests with Allure
+        id: tests
+        continue-on-error: true
+        env:
+          ALLURE_NODE_TEST_CONFIG: >-
+            {"resultsDir":"allure-results","globalLabels":{"layer":"integration","repository":"${{ github.repository }}"},"environmentInfo":{"node":"24","runner":"ubuntu-latest"}}
+        run: |
+          set -o pipefail
+          npm run test:integration:allure 2>&1 | tee reports/integration-tests.log
+
+      - name: Generate Allure HTML report
+        if: always()
+        run: npm run report:allure
+
+      - name: Upload integration test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-evidence-${{ github.run_number }}
+          path: |
+            allure-results
+            allure-report
+            reports/integration-tests.log
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Write integration test summary
+        if: always()
+        run: |
+          {
+            echo "## Integration test evidence"
+            echo ""
+            echo "- Test command: \`npm run test:integration:allure\`"
+            echo "- Raw log: \`reports/integration-tests.log\`"
+            echo "- Allure results and HTML report are attached to this workflow run."
+            echo "- Test outcome: \`${{ steps.tests.outcome }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Preserve integration test failure
+        if: steps.tests.outcome == 'failure'
+        run: exit 1

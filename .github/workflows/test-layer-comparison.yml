@@ -1,0 +1,69 @@
+name: Test Layer Comparison
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: Measured executions per layer
+        required: false
+        default: "5"
+      warmups:
+        description: Warmup executions per layer
+        required: false
+        default: "1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-layer-comparison-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compare:
+    name: Runtime and traceability evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Resolve Chromium executable
+        shell: bash
+        run: |
+          set -euo pipefail
+          browser_path="$(command -v chromium || command -v chromium-browser || command -v google-chrome || command -v google-chrome-stable || true)"
+          if [[ -z "$browser_path" ]]; then
+            echo "::error::No Chromium-compatible browser was found on the runner."
+            exit 1
+          fi
+          echo "CHROMIUM_PATH=$browser_path" >> "$GITHUB_ENV"
+          "$browser_path" --version
+
+      - name: Compare test layers
+        env:
+          COMPARISON_ITERATIONS: ${{ github.event.inputs.iterations || '5' }}
+          COMPARISON_WARMUPS: ${{ github.event.inputs.warmups || '1' }}
+        run: npm run compare:layers
+
+      - name: Upload comparison evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-layer-comparison-${{ github.run_number }}
+          path: reports/test-layer-comparison
+          if-no-files-found: error
+          retention-days: 30
