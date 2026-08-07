@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Evidence-driven comparison of unit, integration, system E2E, and browser E2E test layers.">
+  <title>Test Layer Lab — Evidence Dashboard</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="Test Layer Lab home">Test Layer Lab</a>
+    <nav aria-label="Primary navigation">
+      <a href="#runtime">Runtime</a>
+      <a href="#detection">Detection</a>
+      <a href="#layers">Layers</a>
+      <a href="#method">Method</a>
+      <a href="./allure/">Allure</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero shell">
+      <div>
+        <p class="eyebrow">Evidence-driven quality engineering</p>
+        <h1>How much confidence does each test layer buy?</h1>
+        <p class="lead">A reproducible lab for comparing unit, HTTP integration, system E2E, and real-browser E2E tests by execution cost, realistic defect detection, and the risks each layer uniquely protects.</p>
+        <div class="actions">
+          <a class="button primary" href="#runtime">Explore the evidence</a>
+          <a class="button" href="./allure/">Open Allure report</a>
+          <a class="button" href="https://github.com/carlacazv/test-layer-lab">View source</a>
+        </div>
+        <p class="build-line" id="build-line">Loading current build evidence…</p>
+      </div>
+      <aside class="decision-card" aria-label="Current decision">
+        <span class="status">Current decision</span>
+        <strong>Retain all four layers for this test bucket.</strong>
+        <p>The measured full configuration is the smallest evaluated set that preserves ceiling defect detection. Runtime alone is not used as a removal criterion.</p>
+      </aside>
+    </section>
+
+    <section class="shell metric-grid" aria-label="Headline evidence">
+      <article class="metric"><span>Realistic mutants</span><strong>12/12</strong><small>detected by the complete measured configuration</small></article>
+      <article class="metric"><span>Automated mutation panel</span><strong>8/8</strong><small>killed, with benign controls kept separate</small></article>
+      <article class="metric"><span>Benign controls</span><strong>2/2</strong><small>survived every layer as expected</small></article>
+      <article class="metric"><span>Current Allure suite</span><strong>12</strong><small>tests across the four execution layers</small></article>
+    </section>
+
+    <section class="shell section" id="runtime">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Runtime evidence</p>
+          <h2>Cost is measured, not guessed.</h2>
+        </div>
+        <p>The Pages workflow regenerates this table from the repository on every main deployment. The default protocol is one warmup plus five measured runs per layer.</p>
+      </div>
+
+      <div class="evidence-panel">
+        <div class="runtime-chart" id="runtime-chart" aria-label="Runtime cost chart"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Layer</th><th>Tests</th><th>Median</th><th>p95</th><th>Relative cost</th><th>Result</th></tr>
+            </thead>
+            <tbody id="runtime-table">
+              <tr><td colspan="6">Loading generated comparison evidence…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note" id="runtime-protocol">The live comparison metadata will appear here after deployment.</p>
+      </div>
+    </section>
+
+    <section class="shell section" id="detection">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Defect-detection evidence</p>
+          <h2>Faster does not mean safer.</h2>
+        </div>
+        <p>This lattice asks a different question from the runtime benchmark: which realistic defects remain detectable when complete layers are removed?</p>
+      </div>
+
+      <div class="table-wrap evidence-panel">
+        <table>
+          <thead>
+            <tr><th>Configuration</th><th>Detection</th><th>Warm median</th><th>Relative cost</th><th>Verdict</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Unit only</td><td>6/12</td><td>155.39 ms</td><td>1.00×</td><td><span class="pill rejected">Rejected</span></td></tr>
+            <tr><td>Integration only</td><td>7/12</td><td>220.62 ms</td><td>1.42×</td><td><span class="pill rejected">Rejected</span></td></tr>
+            <tr><td>E2E only</td><td>8/12</td><td>187.60 ms</td><td>1.21×</td><td><span class="pill rejected">Rejected</span></td></tr>
+            <tr><td>Unit + Integration</td><td>10/12</td><td>371.51 ms</td><td>2.39×</td><td><span class="pill rejected">Rejected</span></td></tr>
+            <tr><td>Unit + E2E</td><td>11/12</td><td>330.97 ms</td><td>2.13×</td><td><span class="pill rejected">Rejected</span></td></tr>
+            <tr><td>Integration + E2E</td><td>9/12</td><td>412.67 ms</td><td>2.66×</td><td><span class="pill rejected">Rejected</span></td></tr>
+            <tr class="selected"><td><strong>Unit + Integration + E2E</strong></td><td><strong>12/12</strong></td><td>552.41 ms</td><td>3.55×</td><td><span class="pill dominant">Dominant</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="guardian-grid">
+        <article>
+          <span class="layer-tag">Unit</span>
+          <h3>Exclusive guardians</h3>
+          <ul><li><code>M03</code> inclusive free-shipping boundary</li><li><code>M04</code> approved shipping fee</li><li><code>M06</code> positive-integer quantity validation</li></ul>
+        </article>
+        <article>
+          <span class="layer-tag">Integration</span>
+          <h3>Exclusive guardian</h3>
+          <ul><li><code>M08</code> authorization guard removal at the real HTTP seam</li></ul>
+        </article>
+        <article>
+          <span class="layer-tag">E2E</span>
+          <h3>Exclusive guardians</h3>
+          <ul><li><code>M11</code> page composition loses the primary heading</li><li><code>M12</code> browser wiring calls the wrong endpoint</li></ul>
+        </article>
+      </div>
+      <p class="source-line">Source evidence: <a href="https://github.com/carlacazv/test-layer-lab/blob/main/docs/quote-pricing/dominant-configuration.md">dominant configuration</a>, <a href="https://github.com/carlacazv/test-layer-lab/tree/main/docs/quote-pricing">raw quote-pricing evidence</a>.</p>
+    </section>
+
+    <section class="shell section" id="layers">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Layer analysis</p>
+          <h2>What each layer actually proves.</h2>
+        </div>
+        <p>The goal is not to defend a pyramid shape. It is to make the protected risk explicit and then ask whether that risk can be covered more cheaply without losing detection.</p>
+      </div>
+
+      <div class="layer-grid">
+        <article class="layer-card">
+          <span>01</span><h3>Unit</h3>
+          <p class="purpose">Business rules, calculations, validation, and boundary values.</p>
+          <dl><dt>Strong at</dt><dd>Fast feedback and precise rule failures.</dd><dt>Does not prove</dt><dd>HTTP authorization, composition, DOM execution, or network wiring.</dd><dt>Observed trade-off</dt><dd>Fastest runtime, but unit-only detected only 6/12 realistic mutants in the lattice.</dd></dl>
+        </article>
+        <article class="layer-card">
+          <span>02</span><h3>Integration</h3>
+          <p class="purpose">HTTP contract, authorization, status codes, and error payloads.</p>
+          <dl><dt>Strong at</dt><dd>Seams where domain behavior meets the public API.</dd><dt>Does not prove</dt><dd>Real browser execution or complete UI composition.</dd><dt>Observed trade-off</dt><dd>Protects an authorization defect that no other complete layer killed in the measured panel.</dd></dl>
+        </article>
+        <article class="layer-card">
+          <span>03</span><h3>System E2E</h3>
+          <p class="purpose">Composed application flow through the public HTTP boundary.</p>
+          <dl><dt>Strong at</dt><dd>Cross-component behavior and externally visible system flow.</dd><dt>Does not prove</dt><dd>That a real browser executes client code correctly.</dd><dt>Observed trade-off</dt><dd>Broader confidence than isolated tests, while remaining much cheaper than the browser run in the current runtime benchmark.</dd></dl>
+        </article>
+        <article class="layer-card">
+          <span>04</span><h3>Browser E2E</h3>
+          <p class="purpose">Real DOM execution, client-side JavaScript, and network wiring.</p>
+          <dl><dt>Strong at</dt><dd>Browser-visible composition and the final client/network seam.</dd><dt>Does not prove</dt><dd>Every lower-level business rule efficiently.</dd><dt>Observed trade-off</dt><dd>Most expensive measured layer; retained because its protected risk is different, not because broad E2E coverage is inherently better.</dd></dl>
+        </article>
+      </div>
+    </section>
+
+    <section class="shell section" id="method">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Methodology</p>
+          <h2>Evidence should be reproducible.</h2>
+        </div>
+        <p>Every number needs a protocol and an interpretation boundary. Otherwise a benchmark becomes decoration.</p>
+      </div>
+
+      <div class="method-grid">
+        <article><strong>1</strong><h3>Run comparable scopes</h3><p>Each layer is executed independently using the same repository commit and runner context.</p></article>
+        <article><strong>2</strong><h3>Warm before measuring</h3><p>The default runtime protocol uses one warmup and five measured executions, then reports median and p95.</p></article>
+        <article><strong>3</strong><h3>Keep raw evidence</h3><p>TAP logs, JSON, Markdown, test-file SHA-256 hashes, and Allure output are preserved as traceability evidence.</p></article>
+        <article><strong>4</strong><h3>Separate cost from effectiveness</h3><p>Runtime answers “how expensive?” Mutation/lattice evidence answers “what defects are lost if this layer disappears?”</p></article>
+        <article><strong>5</strong><h3>Use benign controls</h3><p>Expected-surviving refactors protect the experiment from rewarding brittle tests that fail on harmless changes.</p></article>
+        <article><strong>6</strong><h3>Do not overgeneralize</h3><p>The conclusion applies to this repository, bucket, mutant panel, runner, data, and protocol. A different product needs a new measurement.</p></article>
+      </div>
+
+      <div class="callout">
+        <strong>Quality-first pruning rule</strong>
+        <p>Before removing an expensive layer, identify the realistic defect it uniquely guards, add a cheaper independent test that kills the same defect, rerun the full protocol, and remove the expensive check only if ceiling detection is preserved.</p>
+      </div>
+    </section>
+
+    <section class="shell section resources">
+      <div>
+        <p class="eyebrow">Inspect the evidence</p>
+        <h2>Do not trust the dashboard. Verify it.</h2>
+      </div>
+      <div class="resource-links">
+        <a href="./allure/"><strong>Allure report</strong><span>Current consolidated test execution</span></a>
+        <a href="./evidence/runtime-comparison.json"><strong>Runtime JSON</strong><span>Machine-readable generated comparison</span></a>
+        <a href="./evidence/runtime-comparison.md"><strong>Runtime Markdown</strong><span>Human-readable CI evidence</span></a>
+        <a href="https://github.com/carlacazv/test-layer-lab/tree/main/docs/quote-pricing"><strong>Mutation evidence</strong><span>Raw files and analysis in GitHub</span></a>
+        <a href="https://github.com/carlacazv/test-layer-lab/actions"><strong>GitHub Actions</strong><span>Independent workflow history</span></a>
+        <a href="https://github.com/carlacazv/test-layer-lab"><strong>Repository</strong><span>Tests, scripts, and architecture</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell"><strong>Test Layer Lab</strong><span>Built for QA engineers who want evidence before test-architecture opinions.</span></div>
+  </footer>
+
+  <script src="./app.js"></script>
+</body>
+</html>
