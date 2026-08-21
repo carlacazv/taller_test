@@ -10,6 +10,7 @@
     "test:unit": "node --test tests/unit/*.test.js",
     "test:integration": "node --test tests/integration/*.test.js",
     "test:e2e": "node --test tests/e2e/*.test.js",
+    "test:e2e-api": "node --test tests/e2e-api/*.test.js",
     "test:browser": "playwright test",
     "test:browser:ui": "playwright test --ui",
     "test:browser:debug": "playwright test --debug",
@@ -24,7 +25,9 @@
     "compare:layers": "node scripts/compare-test-layers.mjs",
     "mutation:automated": "node scripts/run-automated-mutation.mjs",
     "audit:manual": "node scripts/run-manual-mutants.mjs",
-    "mutation:evidence": "npm run mutation:automated && npm run audit:manual"
+    "mutation:evidence": "npm run mutation:automated && npm run audit:manual",
+    "experiment:arm": "node scripts/run-four-layer-arm.mjs",
+    "experiment:tournament": "node scripts/benchmark-four-layer-portfolios.mjs"
   },
   "engines": {
     "node": ">=20"

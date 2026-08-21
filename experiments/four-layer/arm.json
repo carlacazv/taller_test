@@ -1,0 +1,5 @@
+{
+  "id": "all-four",
+  "title": "Unit + Integration + E2E API + E2E UI",
+  "layers": ["unit", "integration", "e2e-api", "e2e-ui"]
+}
