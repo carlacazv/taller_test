@@ -1,0 +1,73 @@
+name: Mutation Testing
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mutation-testing-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  mutation:
+    name: Mutation evidence / Node 24
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Run automated mutation smoke
+        id: automated
+        continue-on-error: true
+        run: npm run mutation:automated
+
+      - name: Reproduce realistic mutant lattice
+        id: manual
+        continue-on-error: true
+        run: npm run audit:manual
+
+      - name: Upload mutation evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: mutation-evidence-${{ github.run_number }}
+          path: reports/mutation
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Write mutation summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Mutation evidence"
+            echo ""
+            if [[ -f reports/mutation/automated-mutation.md ]]; then
+              cat reports/mutation/automated-mutation.md
+            fi
+            echo ""
+            if [[ -f reports/mutation/manual-mutant-panel.md ]]; then
+              cat reports/mutation/manual-mutant-panel.md
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Preserve mutation failure
+        if: steps.automated.outcome == 'failure' || steps.manual.outcome == 'failure'
+        run: exit 1

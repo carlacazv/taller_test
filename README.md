@@ -6,6 +6,7 @@
 [![System E2E Tests](https://github.com/carlacazv/test-layer-lab/actions/workflows/e2e-tests.yml/badge.svg)](https://github.com/carlacazv/test-layer-lab/actions/workflows/e2e-tests.yml)
 [![Browser E2E Tests](https://github.com/carlacazv/test-layer-lab/actions/workflows/browser-tests.yml/badge.svg)](https://github.com/carlacazv/test-layer-lab/actions/workflows/browser-tests.yml)
 [![Allure Report](https://github.com/carlacazv/test-layer-lab/actions/workflows/allure-report.yml/badge.svg)](https://github.com/carlacazv/test-layer-lab/actions/workflows/allure-report.yml)
+[![Mutation Testing](https://github.com/carlacazv/test-layer-lab/actions/workflows/mutation-testing.yml/badge.svg)](https://github.com/carlacazv/test-layer-lab/actions/workflows/mutation-testing.yml)
 [![Test Layer Comparison](https://github.com/carlacazv/test-layer-lab/actions/workflows/test-layer-comparison.yml/badge.svg)](https://github.com/carlacazv/test-layer-lab/actions/workflows/test-layer-comparison.yml)
 [![Evidence Pages](https://github.com/carlacazv/test-layer-lab/actions/workflows/evidence-pages.yml/badge.svg)](https://github.com/carlacazv/test-layer-lab/actions/workflows/evidence-pages.yml)
 
@@ -20,19 +21,11 @@ Runtime alone is never treated as evidence that a test layer is unnecessary.
 
 ## Evidence dashboard
 
-The GitHub Pages dashboard is built only after all four test layers pass. On each `main` deployment it regenerates the runtime comparison, embeds the consolidated Allure report, and publishes the traceability evidence used by the dashboard.
+The GitHub Pages dashboard is built only after the test, runtime, and mutation evidence for the exact commit has been regenerated successfully. It embeds the consolidated Allure report and publishes machine-readable mutation and runtime artifacts alongside it.
 
 Expected project URL after GitHub Pages is enabled with **Settings → Pages → Source: GitHub Actions**:
 
 `https://carlacazv.github.io/test-layer-lab/`
-
-The Pages workflow publishes:
-
-- the QA-facing evidence dashboard;
-- current runtime comparison JSON and Markdown;
-- the consolidated Allure HTML report;
-- a copy of the dominant-configuration evidence;
-- a downloadable workflow artifact with comparison and Allure evidence.
 
 ## Test layers
 
@@ -43,13 +36,42 @@ The Pages workflow publishes:
 | System E2E | Composed application through its public HTTP boundary | `npm run test:e2e` |
 | Browser E2E | DOM execution, client JavaScript, and network wiring | `REQUIRE_BROWSER=1 npm run test:browser` |
 
-Each layer has an independent GitHub Actions workflow. Test workflows publish raw logs, Allure result files, and an Allure HTML report even when tests fail.
+Each execution layer has an independent GitHub Actions workflow. Test workflows publish raw logs, Allure result files, and Allure HTML evidence even when tests fail.
+
+## Mutation testing
+
+Mutation evidence is reproducible from the current repository state instead of being a historical dashboard claim.
+
+```bash
+npm run mutation:automated
+npm run audit:manual
+# or both
+npm run mutation:evidence
+```
+
+The automated smoke applies eight deterministic mutants and runs the non-browser suite against each one. The realistic panel applies 12 production-style mutants plus two benign refactor controls, executes unit, integration, and system E2E independently, and verifies the documented seven-arm lattice:
+
+| Configuration | Expected detection |
+|---|---:|
+| Unit only | 6/12 |
+| Integration only | 7/12 |
+| System E2E only | 8/12 |
+| Unit + Integration | 10/12 |
+| Unit + E2E | 11/12 |
+| Integration + E2E | 9/12 |
+| Unit + Integration + E2E | 12/12 |
+
+Generated evidence is written under `reports/mutation/` as JSON, Markdown, CSV, and raw per-mutant logs. The mutation workflow uploads those files as a reproducibility artifact.
+
+### Allure compatibility boundary
+
+Allure remains the test-execution report. Mutation results are **not** emitted as fake Allure test cases. They use a separate mutation result contract containing mutant identity, operator, source file, killed/survived status, killing layer, duration, and traceable logs. This keeps the semantics correct while leaving a clean path for attachments or a future Allure 3 plugin.
+
+See [Mutation evidence and Allure compatibility](docs/quote-pricing/mutation-allure-compatibility.md).
 
 ## CI evidence preservation
 
 Pull-request workflows cancel older runs when a newer commit supersedes them. Runs triggered by pushes to `main` are not cancelled, preserving a complete evidence trail for merged commits.
-
-The workflows use current GitHub-maintained action majors (`checkout@v6`, `setup-node@v6`, and `upload-artifact@v6` where applicable).
 
 ## Run locally
 
@@ -62,6 +84,7 @@ Requirements:
 npm install
 npm test
 REQUIRE_BROWSER=1 npm run test:browser
+npm run mutation:evidence
 ```
 
 Generate a consolidated Allure report:
@@ -72,16 +95,14 @@ npm run report:allure
 npx allure open allure-report
 ```
 
-Generate traceable comparison evidence:
+Generate traceable runtime comparison evidence:
 
 ```bash
 npm run compare:layers
 ```
 
-The comparison produces Markdown, JSON, and raw TAP logs under `reports/test-layer-comparison/`. It records timing statistics, result counts, environment metadata, and SHA-256 hashes of the exact test files used.
-
 ## Evidence guide
 
-See [CI, Allure, and comparison evidence](docs/ci-evidence.md) for the workflow map, report instructions, comparison protocol, traceability rules, and interpretation limits.
+See [CI, Allure, mutation, and comparison evidence](docs/ci-evidence.md) for workflow and artifact details.
 
 See [Dominant Test-Layer Configuration](docs/quote-pricing/dominant-configuration.md) for the measured mutation lattice, exclusive guardians, controls, pruning rules, and final decision.
