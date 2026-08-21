@@ -23,7 +23,7 @@ Runtime alone is never treated as evidence that a test layer is unnecessary.
 
 The GitHub Pages dashboard is built only after the test, runtime, and mutation evidence for the exact commit has been regenerated successfully. It embeds the consolidated Allure report and publishes machine-readable mutation and runtime artifacts alongside it.
 
-Expected project URL after GitHub Pages is enabled with **Settings → Pages → Source: GitHub Actions**:
+Project URL:
 
 `https://carlacazv.github.io/test-layer-lab/`
 
@@ -34,9 +34,40 @@ Expected project URL after GitHub Pages is enabled with **Settings → Pages →
 | Unit | Domain calculations, validation, and boundary values | `npm run test:unit` |
 | Integration | HTTP contract, authorization, and error payloads | `npm run test:integration` |
 | System E2E | Composed application through its public HTTP boundary | `npm run test:e2e` |
-| Browser E2E | DOM execution, client JavaScript, and network wiring | `REQUIRE_BROWSER=1 npm run test:browser` |
+| Browser E2E | Playwright-driven DOM execution, client JavaScript, browser validation, and network wiring | `npm run test:browser` |
 
-Each execution layer has an independent GitHub Actions workflow. Test workflows publish raw logs, Allure result files, and Allure HTML evidence even when tests fail.
+Each execution layer has an independent GitHub Actions workflow. Test workflows preserve raw logs and report evidence even when tests fail.
+
+## Playwright browser E2E architecture
+
+The browser layer uses `@playwright/test` with a deliberately small Page Object Model rather than putting selectors and workflow logic directly in spec files.
+
+```text
+tests/browser/
+├── data/
+│   └── quote-cases.js
+├── fixtures/
+│   └── quote.fixture.js
+├── pages/
+│   └── quote.page.js
+└── specs/
+    ├── quote-calculation.spec.js
+    ├── quote-contract.spec.js
+    ├── quote-navigation.spec.js
+    └── quote-resilience.spec.js
+```
+
+The locator policy is accessibility-first:
+
+1. `getByRole` for interactive and semantic elements;
+2. `getByLabel` for form controls;
+3. stable user-visible text when it represents product behavior;
+4. test IDs only when no meaningful user-facing contract exists;
+5. no XPath or CSS selectors tied to DOM layout.
+
+Page Objects own locators and reusable actions. Assertions stay in specs so test intent remains explicit. CI enables `forbidOnly`, flaky-test failure, retries for diagnostics, and Playwright trace/screenshot/video retention on failure.
+
+See [Playwright browser E2E architecture](docs/playwright-e2e.md).
 
 ## Mutation testing
 
@@ -78,13 +109,21 @@ Pull-request workflows cancel older runs when a newer commit supersedes them. Ru
 Requirements:
 
 - Node.js 20 or newer;
-- a Chromium-compatible browser for the browser E2E test.
+- Playwright Chromium installed locally.
 
 ```bash
 npm install
+npx playwright install chromium
 npm test
-REQUIRE_BROWSER=1 npm run test:browser
+npm run test:browser
 npm run mutation:evidence
+```
+
+Useful Playwright commands:
+
+```bash
+npm run test:browser:ui
+npm run test:browser:debug
 ```
 
 Generate a consolidated Allure report:

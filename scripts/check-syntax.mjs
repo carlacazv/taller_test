@@ -9,11 +9,13 @@ function walk(directory) {
   });
 }
 
-const files = ["src", "tests", "scripts"]
-  .flatMap(walk)
-  .filter((file) => file.endsWith(".js") || file.endsWith(".mjs"));
+const files = [
+  ...["src", "tests", "scripts"].flatMap(walk),
+  "playwright.config.js"
+].filter((file) => file.endsWith(".js") || file.endsWith(".mjs"));
 
 for (const file of files) {
   execFileSync(process.execPath, ["--check", file], { stdio: "inherit" });
 }
+
 console.log(`Syntax check passed for ${files.length} files.`);

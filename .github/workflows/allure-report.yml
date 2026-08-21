@@ -20,7 +20,7 @@ jobs:
   allure:
     name: All test layers / Node 24
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Checkout repository
@@ -35,28 +35,18 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Resolve Chromium-compatible browser
-        shell: bash
-        run: |
-          set -euo pipefail
-          browser_path="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
-          if [[ -z "$browser_path" ]]; then
-            echo "::error::No Chromium-compatible browser was found on the runner."
-            exit 1
-          fi
-          echo "CHROMIUM_PATH=$browser_path" >> "$GITHUB_ENV"
-          "$browser_path" --version
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Prepare consolidated evidence directories
         run: |
-          rm -rf allure-results allure-report
+          rm -rf allure-results allure-report playwright-report test-results
           mkdir -p reports
 
       - name: Run every test layer with Allure
         id: tests
         continue-on-error: true
         env:
-          REQUIRE_BROWSER: "1"
           ALLURE_NODE_TEST_CONFIG: >-
             {"resultsDir":"allure-results","globalLabels":{"repository":"${{ github.repository }}","launch":"all-layers"},"environmentInfo":{"node":"24","runner":"ubuntu-latest","commit":"${{ github.sha }}"}}
         shell: bash
@@ -93,6 +83,8 @@ jobs:
           path: |
             allure-results
             allure-report
+            playwright-report
+            test-results/playwright
             reports/all-test-layers.log
           if-no-files-found: warn
           retention-days: 30
@@ -103,9 +95,9 @@ jobs:
           {
             echo "## Consolidated Allure report"
             echo ""
-            echo "- Includes unit, integration, system E2E, and browser E2E results."
+            echo "- Includes unit, integration, system E2E, and Playwright browser E2E results."
+            echo "- Browser failures retain Playwright trace, screenshot, and video evidence."
             echo "- Raw execution log: \`reports/all-test-layers.log\`"
-            echo "- Download the \`consolidated-allure-report-${{ github.run_number }}\` artifact to open the HTML report."
             echo "- Combined test outcome: \`${{ steps.tests.outcome }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
 

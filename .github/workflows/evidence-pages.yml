@@ -20,7 +20,7 @@ jobs:
   build:
     name: Build verified evidence site
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
 
     steps:
       - name: Checkout repository
@@ -35,21 +35,11 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Resolve Chromium-compatible browser
-        shell: bash
-        run: |
-          set -euo pipefail
-          browser_path="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
-          if [[ -z "$browser_path" ]]; then
-            echo "::error::No Chromium-compatible browser was found on the runner."
-            exit 1
-          fi
-          echo "CHROMIUM_PATH=$browser_path" >> "$GITHUB_ENV"
-          "$browser_path" --version
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Run all test layers with Allure
         env:
-          REQUIRE_BROWSER: "1"
           ALLURE_NODE_TEST_CONFIG: >-
             {"resultsDir":"allure-results","globalLabels":{"repository":"${{ github.repository }}","launch":"evidence-pages"},"environmentInfo":{"node":"24","runner":"ubuntu-latest","commit":"${{ github.sha }}"}}
         run: npm run test:allure
@@ -101,7 +91,9 @@ jobs:
             reports/mutation
             allure-results
             allure-report
-          if-no-files-found: error
+            playwright-report
+            test-results/playwright
+          if-no-files-found: warn
           retention-days: 30
 
       - name: Write evidence summary
@@ -109,12 +101,13 @@ jobs:
           {
             echo "## Evidence Pages build"
             echo ""
-            echo "- All four test layers passed before the site artifact was created."
+            echo "- Unit, integration, system E2E, and Playwright browser E2E passed before the site artifact was created."
+            echo "- Browser E2E uses semantic locators plus Page Objects and retains trace/screenshot/video on failure."
             echo "- Runtime evidence was regenerated from this commit."
             echo "- Automated mutation and the realistic mutant lattice were regenerated from this commit."
             echo "- The consolidated Allure HTML report is embedded under \`/allure/\`."
             echo "- Mutation evidence remains a separate result model from Allure test results."
-            echo "- Raw comparison, mutation, and Allure evidence are retained as workflow artifacts."
+            echo "- Raw comparison, mutation, Playwright, and Allure evidence are retained as workflow artifacts."
           } >> "$GITHUB_STEP_SUMMARY"
 
   deploy:

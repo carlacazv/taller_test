@@ -10,13 +10,15 @@
     "test:unit": "node --test tests/unit/*.test.js",
     "test:integration": "node --test tests/integration/*.test.js",
     "test:e2e": "node --test tests/e2e/*.test.js",
-    "test:browser": "node --test tests/browser/*.test.js",
+    "test:browser": "playwright test",
+    "test:browser:ui": "playwright test --ui",
+    "test:browser:debug": "playwright test --debug",
+    "test:browser:allure": "playwright test --reporter=line,html,allure-playwright",
     "test": "npm run check && npm run test:unit && npm run test:integration && npm run test:e2e",
-    "test:ci": "npm test && REQUIRE_BROWSER=1 npm run test:browser",
+    "test:ci": "npm test && npm run test:browser",
     "test:unit:allure": "node --test --test-reporter spec --test-reporter-destination stdout --test-reporter allure-node-test/reporter --test-reporter-destination stdout tests/unit/*.test.js",
     "test:integration:allure": "node --test --test-reporter spec --test-reporter-destination stdout --test-reporter allure-node-test/reporter --test-reporter-destination stdout tests/integration/*.test.js",
     "test:e2e:allure": "node --test --test-reporter spec --test-reporter-destination stdout --test-reporter allure-node-test/reporter --test-reporter-destination stdout tests/e2e/*.test.js",
-    "test:browser:allure": "node --test --test-reporter spec --test-reporter-destination stdout --test-reporter allure-node-test/reporter --test-reporter-destination stdout tests/browser/*.test.js",
     "test:allure": "npm run test:unit:allure && npm run test:integration:allure && npm run test:e2e:allure && npm run test:browser:allure",
     "report:allure": "allure generate allure-results",
     "compare:layers": "node scripts/compare-test-layers.mjs",
@@ -28,8 +30,10 @@
     "node": ">=20"
   },
   "devDependencies": {
+    "@playwright/test": "1.62.1",
     "allure": "3.14.3",
     "allure-js-commons": "3.10.2",
-    "allure-node-test": "3.10.2"
+    "allure-node-test": "3.10.2",
+    "allure-playwright": "3.10.2"
   }
 }

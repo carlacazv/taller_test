@@ -10,11 +10,25 @@ The repository exposes each quality signal as an independent workflow so failure
 | Unit Tests | Domain rules and boundaries | Raw log + Allure results + Allure HTML |
 | Integration Tests | HTTP contract and authorization | Raw log + Allure results + Allure HTML |
 | System E2E Tests | Composed application through HTTP | Raw log + Allure results + Allure HTML |
-| Browser E2E Tests | Real browser, DOM, JavaScript, and network wiring | Raw log + Allure results + Allure HTML |
+| Browser E2E Tests | Playwright Chromium, DOM, JavaScript, validation, and network wiring | Raw log + Playwright trace/screenshot/video + Playwright HTML + Allure |
 | Consolidated Allure Report | All test layers in one launch | Combined raw log + Allure results + Allure HTML |
 | Mutation Testing | Automated mutants + realistic mutant lattice + benign controls | JSON + Markdown + CSV + raw logs |
-| Test Layer Comparison | Runtime and traceability comparison | Markdown + JSON + raw TAP logs |
-| Evidence Pages | Verified public evidence bundle | Runtime + mutation + Allure + dashboard |
+| Test Layer Comparison | Runtime and traceability comparison | Markdown + JSON + raw Node TAP and Playwright JSON/logs |
+| Evidence Pages | Verified public evidence bundle | Runtime + mutation + Playwright + Allure + dashboard |
+
+## Playwright browser evidence
+
+The browser layer uses Playwright-managed Chromium. CI installs the browser explicitly with:
+
+```bash
+npx playwright install --with-deps chromium
+```
+
+This removes dependence on whichever Chrome/Chromium binary happens to exist on the GitHub-hosted runner.
+
+Browser specs use Page Objects and accessibility-first locators. Failed executions retain Playwright traces, screenshots, and videos under `test-results/playwright/`; the browser workflow also produces a Playwright HTML report and Allure evidence.
+
+See [Playwright browser E2E architecture](playwright-e2e.md) for the locator and test-design rules.
 
 ## Allure and mutation are different result models
 
@@ -76,13 +90,15 @@ reports/mutation/
     └── manual/
 ```
 
-The dedicated real-browser smoke remains an independent fourth execution layer. It is not folded into the historical three-layer mutation lattice, so the decision model stays comparable to the original experiment.
+The Playwright browser suite remains an independent fourth execution layer. It is not folded into the historical three-layer mutation lattice, so the decision model stays comparable to the original experiment.
 
 ## Runtime comparison protocol
 
-The comparison workflow executes every layer independently using the same runner and commit. The default protocol uses one warmup and five measured executions per layer, retains TAP evidence, records test-file SHA-256 hashes, and reports median, p95, minimum, maximum, and relative runtime cost.
+The comparison workflow executes every layer independently using the same runner and commit. The default protocol uses one warmup and five measured executions per layer and reports median, p95, minimum, maximum, relative runtime cost, test totals, and flaky count.
 
-Generated files:
+Node-based layers retain TAP output. The browser layer executes the real Playwright suite with the JSON reporter so its test statistics are machine-readable rather than inferred from terminal text. SHA-256 hashes cover the browser specs, Page Object, fixture, scenario data, and `playwright.config.js` as traceability inputs.
+
+Generated files include:
 
 ```text
 reports/test-layer-comparison/
@@ -93,7 +109,8 @@ reports/test-layer-comparison/
     ├── unit-run-01.tap
     ├── integration-run-01.tap
     ├── e2e-run-01.tap
-    └── browser-run-01.tap
+    ├── browser-run-01.log
+    └── browser-run-01.json
 ```
 
 ## Evidence interpretation
@@ -106,11 +123,12 @@ All measurements and mutation conclusions are scoped to the repository commit, t
 
 ```bash
 npm install
+npx playwright install chromium
 npm run check
 npm run test:unit
 npm run test:integration
 npm run test:e2e
-REQUIRE_BROWSER=1 npm run test:browser
+npm run test:browser
 npm run test:allure
 npm run report:allure
 npm run mutation:evidence
