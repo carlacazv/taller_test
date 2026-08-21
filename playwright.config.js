@@ -6,6 +6,7 @@ const mutationExperiment = process.env.MUTATION_EXPERIMENT === "1";
 export default defineConfig({
   testDir: "./tests/browser",
   testMatch: /.*\.spec\.js/,
+  testIgnore: mutationExperiment ? [] : ["**/experiment/**"],
   fullyParallel: !mutationExperiment,
   forbidOnly: Boolean(process.env.CI),
   failOnFlakyTests: Boolean(process.env.CI),
