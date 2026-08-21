@@ -8,10 +8,10 @@
       :root { font-family: Inter, system-ui, sans-serif; color: #17212b; background: #f4f7f9; }
       body { margin: 0; min-height: 100vh; display: grid; place-items: center; }
       main { width: min(92vw, 560px); background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 12px 40px rgba(0,0,0,.08); }
-      form { display: grid; gap: 1rem; }
-      label { display: grid; gap: .4rem; font-weight: 600; }
+      form { display: grid; gap: .65rem; }
+      label { margin-top: .35rem; font-weight: 600; }
       input, select, button { font: inherit; padding: .75rem; border-radius: 8px; border: 1px solid #b8c4ce; }
-      button { cursor: pointer; border: 0; background: #176b55; color: white; font-weight: 700; }
+      button { margin-top: .35rem; cursor: pointer; border: 0; background: #176b55; color: white; font-weight: 700; }
       output { display: block; margin-top: 1.5rem; padding: 1rem; background: #edf7f3; border-radius: 8px; min-height: 1.5rem; }
     </style>
   </head>
@@ -20,17 +20,15 @@
       <h1>TRIMS Quote Lab</h1>
       <p>Compare automation seams using a small pricing workflow.</p>
       <form id="quote-form">
-        <label>
-          Plan
-          <select id="plan" name="plan">
-            <option value="standard">Standard</option>
-            <option value="premium">Premium</option>
-          </select>
-        </label>
-        <label>
-          Quantity
-          <input id="quantity" name="quantity" type="number" min="1" value="2" />
-        </label>
+        <label for="plan">Plan</label>
+        <select id="plan" name="plan">
+          <option value="standard">Standard</option>
+          <option value="premium">Premium</option>
+        </select>
+
+        <label for="quantity">Quantity</label>
+        <input id="quantity" name="quantity" type="number" min="1" value="2" />
+
         <button type="submit">Calculate quote</button>
       </form>
       <output id="result" role="status" aria-label="Quote result" aria-live="polite">Submit the form to calculate a quote.</output>
