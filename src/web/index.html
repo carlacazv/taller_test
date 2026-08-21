@@ -33,7 +33,7 @@
         </label>
         <button type="submit">Calculate quote</button>
       </form>
-      <output id="result" aria-live="polite">Submit the form to calculate a quote.</output>
+      <output id="result" role="status" aria-label="Quote result" aria-live="polite">Submit the form to calculate a quote.</output>
     </main>
     <script>
       const form = document.querySelector("#quote-form");
