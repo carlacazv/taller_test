@@ -27,7 +27,7 @@ jobs:
   compare:
     name: Runtime and traceability evidence
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Checkout repository
@@ -42,17 +42,8 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Resolve Chromium-compatible browser
-        shell: bash
-        run: |
-          set -euo pipefail
-          browser_path="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
-          if [[ -z "$browser_path" ]]; then
-            echo "::error::No Chromium-compatible browser was found on the runner."
-            exit 1
-          fi
-          echo "CHROMIUM_PATH=$browser_path" >> "$GITHUB_ENV"
-          "$browser_path" --version
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Compare test layers
         env:
