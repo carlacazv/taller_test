@@ -26,7 +26,8 @@
     "mutation:automated": "node scripts/run-automated-mutation.mjs",
     "audit:manual": "node scripts/run-manual-mutants.mjs",
     "mutation:evidence": "npm run mutation:automated && npm run audit:manual",
-    "experiment:arm": "node scripts/run-four-layer-arm.mjs"
+    "experiment:arm": "node scripts/run-four-layer-arm.mjs",
+    "experiment:tournament": "node scripts/benchmark-four-layer-portfolios.mjs"
   },
   "engines": {
     "node": ">=20"
