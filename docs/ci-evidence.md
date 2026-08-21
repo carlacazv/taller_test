@@ -1,8 +1,8 @@
-# CI, Allure, and comparison evidence
+# CI, Allure, mutation, and comparison evidence
 
 ## Independent GitHub Actions
 
-The repository exposes each quality signal as an independent workflow so failures are visible without opening a monolithic job:
+The repository exposes each quality signal as an independent workflow so failures remain attributable:
 
 | Workflow | Scope | Primary evidence |
 |---|---|---|
@@ -12,41 +12,75 @@ The repository exposes each quality signal as an independent workflow so failure
 | System E2E Tests | Composed application through HTTP | Raw log + Allure results + Allure HTML |
 | Browser E2E Tests | Real browser, DOM, JavaScript, and network wiring | Raw log + Allure results + Allure HTML |
 | Consolidated Allure Report | All test layers in one launch | Combined raw log + Allure results + Allure HTML |
+| Mutation Testing | Automated mutants + realistic mutant lattice + benign controls | JSON + Markdown + CSV + raw logs |
 | Test Layer Comparison | Runtime and traceability comparison | Markdown + JSON + raw TAP logs |
+| Evidence Pages | Verified public evidence bundle | Runtime + mutation + Allure + dashboard |
 
-Every test workflow uploads evidence even when a test fails. The workflow only returns the final failure after report generation and artifact upload.
+## Allure and mutation are different result models
+
+Allure reports test executions. The mutation runners report mutant outcomes. A mutant is not represented as a normal test case because `killed` and `survived` have different semantics from `passed` and `failed`.
+
+The mutation JSON contracts record:
+
+- mutant ID and description;
+- mutation operator and source file;
+- killed/survived status;
+- killing test layer for the realistic panel;
+- duration and raw log path;
+- commit and generation timestamp.
+
+This keeps the data suitable for an Allure attachment or future Allure 3 plugin without corrupting the test-result model.
 
 ## Opening an Allure report
 
 1. Open the relevant GitHub Actions run.
-2. Download the evidence artifact at the bottom of the run summary.
+2. Download the evidence artifact.
 3. Extract the archive.
-4. Open `allure-report/index.html` through a local static server, for example:
-
-```bash
-npx serve allure-report
-```
-
-The `allure-results` directory is also retained so the report can be regenerated with:
+4. Open `allure-report/index.html` through a local static server or regenerate it from `allure-results`.
 
 ```bash
 npm install
 npm run report:allure
+npx allure open allure-report
 ```
 
-## Comparison protocol
+## Mutation protocol
 
-The comparison workflow executes every layer independently using the same runner and commit.
+Run the automated smoke:
 
-Default protocol:
+```bash
+npm run mutation:automated
+```
 
-- one warmup execution per layer;
-- five measured executions per layer;
-- TAP output retained for every measured execution;
-- median, p95, minimum, maximum, and relative runtime cost calculated;
-- test count and pass/fail/skip totals collected;
-- SHA-256 recorded for every test file used in the comparison;
-- browser execution required rather than silently skipped.
+It first verifies a green `npm run test` baseline, applies one deterministic mutant at a time, runs `npm run test`, restores the source in a `finally` block, and writes evidence under `reports/mutation/`.
+
+Run the realistic layer audit:
+
+```bash
+npm run audit:manual
+```
+
+For each of 12 production-style mutants, the audit runs unit, integration, and system E2E independently and records the killing layers. It also applies two equivalent refactor controls that must survive every audited decision layer. The script fails if the observed detection matrix or seven-arm lattice no longer matches the documented baseline.
+
+Generated files include:
+
+```text
+reports/mutation/
+├── automated-mutation.json
+├── automated-mutation.md
+├── manual-mutant-panel.json
+├── manual-mutant-panel.md
+├── manual-mutant-panel.csv
+└── raw/
+    ├── automated/
+    └── manual/
+```
+
+The dedicated real-browser smoke remains an independent fourth execution layer. It is not folded into the historical three-layer mutation lattice, so the decision model stays comparable to the original experiment.
+
+## Runtime comparison protocol
+
+The comparison workflow executes every layer independently using the same runner and commit. The default protocol uses one warmup and five measured executions per layer, retains TAP evidence, records test-file SHA-256 hashes, and reports median, p95, minimum, maximum, and relative runtime cost.
 
 Generated files:
 
@@ -55,24 +89,18 @@ reports/test-layer-comparison/
 ├── comparison.md
 ├── comparison.json
 └── raw/
+    ├── unit-warmup-01.tap
     ├── unit-run-01.tap
     ├── integration-run-01.tap
     ├── e2e-run-01.tap
     └── browser-run-01.tap
 ```
 
-The Markdown table is also written to the GitHub Actions Job Summary, making the comparison visible without downloading the artifact.
-
 ## Evidence interpretation
 
-Runtime is not equivalent to defect-detection capability. A faster layer must not replace another layer only because it is cheaper. The comparison must be read together with the assertions and test purpose:
+Runtime is not equivalent to defect-detection capability. A faster layer must not replace another layer only because it is cheaper. Mutation evidence answers which demonstrated defect classes would be lost; runtime evidence answers what the layer costs under the recorded protocol.
 
-- unit tests protect calculations, validation, and boundary values;
-- integration tests protect the real HTTP contract and authorization seam;
-- system E2E tests protect composed application behavior;
-- browser E2E tests protect client-side execution and browser-to-server wiring.
-
-All timings are specific to the commit, runner, runtime, test data, and execution protocol recorded in `comparison.json`.
+All measurements and mutation conclusions are scoped to the repository commit, test data, runner, runtime, browser boundary, and mutant panel that produced them.
 
 ## Local commands
 
@@ -85,11 +113,6 @@ npm run test:e2e
 REQUIRE_BROWSER=1 npm run test:browser
 npm run test:allure
 npm run report:allure
+npm run mutation:evidence
 npm run compare:layers
-```
-
-To increase the comparison sample:
-
-```bash
-COMPARISON_WARMUPS=2 COMPARISON_ITERATIONS=10 npm run compare:layers
 ```

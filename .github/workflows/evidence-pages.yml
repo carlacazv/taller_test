@@ -20,7 +20,7 @@ jobs:
   build:
     name: Build verified evidence site
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
@@ -63,6 +63,12 @@ jobs:
           COMPARISON_WARMUPS: "1"
         run: npm run compare:layers
 
+      - name: Regenerate automated mutation evidence
+        run: npm run mutation:automated
+
+      - name: Reproduce realistic mutant lattice
+        run: npm run audit:manual
+
       - name: Assemble verified static site
         shell: bash
         run: |
@@ -72,6 +78,11 @@ jobs:
           cp -R site/. _site/
           cp reports/test-layer-comparison/comparison.json _site/evidence/runtime-comparison.json
           cp reports/test-layer-comparison/comparison.md _site/evidence/runtime-comparison.md
+          cp reports/mutation/automated-mutation.json _site/evidence/automated-mutation.json
+          cp reports/mutation/automated-mutation.md _site/evidence/automated-mutation.md
+          cp reports/mutation/manual-mutant-panel.json _site/evidence/manual-mutant-panel.json
+          cp reports/mutation/manual-mutant-panel.md _site/evidence/manual-mutant-panel.md
+          cp reports/mutation/manual-mutant-panel.csv _site/evidence/manual-mutant-panel.csv
           cp -R allure-report/. _site/allure/
           cp docs/quote-pricing/dominant-configuration.md _site/evidence/dominant-configuration.md
           touch _site/.nojekyll
@@ -87,6 +98,7 @@ jobs:
           name: pages-evidence-${{ github.run_number }}
           path: |
             reports/test-layer-comparison
+            reports/mutation
             allure-results
             allure-report
           if-no-files-found: error
@@ -99,8 +111,10 @@ jobs:
             echo ""
             echo "- All four test layers passed before the site artifact was created."
             echo "- Runtime evidence was regenerated from this commit."
+            echo "- Automated mutation and the realistic mutant lattice were regenerated from this commit."
             echo "- The consolidated Allure HTML report is embedded under \`/allure/\`."
-            echo "- Raw comparison and Allure evidence are retained as workflow artifacts."
+            echo "- Mutation evidence remains a separate result model from Allure test results."
+            echo "- Raw comparison, mutation, and Allure evidence are retained as workflow artifacts."
           } >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
