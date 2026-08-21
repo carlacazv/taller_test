@@ -22,16 +22,54 @@ function shortSha(value) {
   return value.slice(0, 8);
 }
 
-function updateSuiteMetric(rows) {
-  const suiteMetric = [...document.querySelectorAll(".metric")].find(
-    (metric) => metric.querySelector("span")?.textContent === "Current Allure suite"
-  );
-  const totalTests = rows.reduce((sum, row) => sum + (Number(row.tests) || 0), 0);
+function renderPortfolioDecision() {
+  const nav = document.querySelector(".topbar nav");
+  if (nav && !nav.querySelector('[href="./portfolio-analysis.html"]')) {
+    nav.insertAdjacentHTML("afterbegin", '<a href="./portfolio-analysis.html">Portfolio decision</a>');
+  }
 
-  if (!suiteMetric || totalTests === 0) return;
+  const primaryAction = document.querySelector(".actions .button.primary");
+  if (primaryAction) {
+    primaryAction.href = "./portfolio-analysis.html";
+    primaryAction.textContent = "Open 15-portfolio comparison";
+  }
 
-  suiteMetric.querySelector("strong").textContent = String(totalTests);
-  suiteMetric.querySelector("small").textContent = `tests across ${rows.length} execution layers`;
+  const decision = document.querySelector(".decision-card");
+  if (decision) {
+    const status = decision.querySelector(".status");
+    const title = decision.querySelector("strong");
+    const copy = decision.querySelector("p");
+    if (status) status.textContent = "Selected portfolio";
+    if (title) title.textContent = "E2E API + focused E2E UI";
+    if (copy) copy.textContent = "It preserved 20/20 realistic-mutant detection with 2/2 benign controls surviving, then had the lowest same-run median among the 100%-detection portfolios. It was 31.4% faster than E2E UI only in the tournament.";
+  }
+
+  const metrics = [...document.querySelectorAll(".metric")];
+  const headline = [
+    ["Portfolio lattice", "15", "every non-empty combination of Unit, Integration, E2E API, and E2E UI"],
+    ["Realistic mutants", "20/20", "detected by the selected portfolio"],
+    ["Benign controls", "2/2", "survived as expected"],
+    ["UI-only penalty", "31.4%", "slower median than E2E API + E2E UI at equal 100% detection"]
+  ];
+  metrics.slice(0, headline.length).forEach((metric, index) => {
+    const [label, value, description] = headline[index];
+    const span = metric.querySelector("span");
+    const strong = metric.querySelector("strong");
+    const small = metric.querySelector("small");
+    if (span) span.textContent = label;
+    if (strong) strong.textContent = value;
+    if (small) small.textContent = description;
+  });
+
+  const detection = document.querySelector("#detection");
+  if (detection) {
+    const eyebrow = detection.querySelector(".section-heading .eyebrow");
+    const heading = detection.querySelector(".section-heading h2");
+    const intro = detection.querySelector(".section-heading > p");
+    if (eyebrow) eyebrow.textContent = "Historical 3-layer baseline";
+    if (heading) heading.textContent = "The original lattice that motivated the portfolio experiment.";
+    if (intro) intro.innerHTML = 'This section preserves the earlier 12-mutant experiment for traceability. The current architecture decision comes from the newer <a href="./portfolio-analysis.html">15-portfolio, 20-mutant comparison</a>.';
+  }
 }
 
 function render(data, live) {
@@ -64,8 +102,6 @@ function render(data, live) {
     `;
   }).join("");
 
-  updateSuiteMetric(rows);
-
   const generated = data.generatedAt ? new Date(data.generatedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "unknown";
   protocol.textContent = `${data.warmups ?? "?"} warmup run(s) + ${data.iterations ?? "?"} measured run(s) per layer · ${data.node ?? "Node unknown"} · ${data.platform ?? "platform unknown"} · commit ${shortSha(data.commit)}.`;
   buildLine.textContent = `${live ? "Live Pages evidence" : "Last verified fallback evidence"} · generated ${generated} · commit ${shortSha(data.commit)}.`;
@@ -82,4 +118,5 @@ async function loadEvidence() {
   }
 }
 
+renderPortfolioDecision();
 loadEvidence();
