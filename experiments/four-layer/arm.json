@@ -1,0 +1,5 @@
+{
+  "id": "integration-e2e-api",
+  "title": "Integration + E2E API",
+  "layers": ["integration", "e2e-api"]
+}
