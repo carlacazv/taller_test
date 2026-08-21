@@ -1,15 +1,16 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
+const mutationExperiment = process.env.MUTATION_EXPERIMENT === "1";
 
 export default defineConfig({
-  testDir: "./tests/browser/specs",
+  testDir: "./tests/browser",
   testMatch: /.*\.spec\.js/,
-  fullyParallel: true,
+  fullyParallel: !mutationExperiment,
   forbidOnly: Boolean(process.env.CI),
   failOnFlakyTests: Boolean(process.env.CI),
-  retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 2 : undefined,
+  retries: mutationExperiment ? 0 : process.env.CI ? 1 : 0,
+  workers: mutationExperiment ? 1 : process.env.CI ? 2 : undefined,
   timeout: 20_000,
   expect: {
     timeout: 5_000
