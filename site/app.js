@@ -22,6 +22,18 @@ function shortSha(value) {
   return value.slice(0, 8);
 }
 
+function updateSuiteMetric(rows) {
+  const suiteMetric = [...document.querySelectorAll(".metric")].find(
+    (metric) => metric.querySelector("span")?.textContent === "Current Allure suite"
+  );
+  const totalTests = rows.reduce((sum, row) => sum + (Number(row.tests) || 0), 0);
+
+  if (!suiteMetric || totalTests === 0) return;
+
+  suiteMetric.querySelector("strong").textContent = String(totalTests);
+  suiteMetric.querySelector("small").textContent = `tests across ${rows.length} execution layers`;
+}
+
 function render(data, live) {
   const tbody = document.querySelector("#runtime-table");
   const chart = document.querySelector("#runtime-chart");
@@ -51,6 +63,8 @@ function render(data, live) {
       </div>
     `;
   }).join("");
+
+  updateSuiteMetric(rows);
 
   const generated = data.generatedAt ? new Date(data.generatedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "unknown";
   protocol.textContent = `${data.warmups ?? "?"} warmup run(s) + ${data.iterations ?? "?"} measured run(s) per layer · ${data.node ?? "Node unknown"} · ${data.platform ?? "platform unknown"} · commit ${shortSha(data.commit)}.`;
