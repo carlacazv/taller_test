@@ -1,0 +1,5 @@
+{
+  "id": "integration-only",
+  "title": "Integration only",
+  "layers": ["integration"]
+}

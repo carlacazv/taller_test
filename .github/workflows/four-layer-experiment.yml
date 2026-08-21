@@ -1,0 +1,71 @@
+name: Four-Layer Experiment Arm
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: four-layer-experiment-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  experiment:
+    name: Mutation coverage and portfolio cost
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Resolve experiment arm
+        id: arm
+        shell: bash
+        run: |
+          set -euo pipefail
+          arm_id="$(node -p "JSON.parse(require('fs').readFileSync('experiments/four-layer/arm.json','utf8')).id")"
+          uses_ui="$(node -p "JSON.parse(require('fs').readFileSync('experiments/four-layer/arm.json','utf8')).layers.includes('e2e-ui')")"
+          echo "arm_id=$arm_id" >> "$GITHUB_OUTPUT"
+          echo "uses_ui=$uses_ui" >> "$GITHUB_OUTPUT"
+          echo "Experiment arm: $arm_id"
+
+      - name: Install Playwright Chromium
+        if: steps.arm.outputs.uses_ui == 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Run selected mutation portfolio
+        env:
+          ARM_BENCHMARK_WARMUPS: "1"
+          ARM_BENCHMARK_ITERATIONS: "3"
+          MUTATION_COMMAND_TIMEOUT_MS: "90000"
+        run: npm run experiment:arm
+
+      - name: Publish experiment summary
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f reports/four-layer-experiment/arm-result.md ]]; then
+            cat reports/four-layer-experiment/arm-result.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload experiment evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: four-layer-${{ steps.arm.outputs.arm_id }}-${{ github.run_number }}
+          path: reports/four-layer-experiment
+          if-no-files-found: error
+          retention-days: 90
