@@ -16,7 +16,7 @@ jobs:
   experiment:
     name: Mutation coverage and portfolio cost
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Checkout repository
@@ -53,6 +53,14 @@ jobs:
           MUTATION_COMMAND_TIMEOUT_MS: "90000"
         run: npm run experiment:arm
 
+      - name: Run fair same-run 15-portfolio benchmark
+        if: steps.arm.outputs.arm_id == 'all-four'
+        env:
+          TOURNAMENT_WARMUPS: "1"
+          TOURNAMENT_ITERATIONS: "5"
+          MUTATION_COMMAND_TIMEOUT_MS: "90000"
+        run: npm run experiment:tournament
+
       - name: Publish experiment summary
         if: always()
         shell: bash
@@ -60,12 +68,18 @@ jobs:
           if [[ -f reports/four-layer-experiment/arm-result.md ]]; then
             cat reports/four-layer-experiment/arm-result.md >> "$GITHUB_STEP_SUMMARY"
           fi
+          if [[ -f reports/four-layer-tournament/portfolio-benchmark.md ]]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            cat reports/four-layer-tournament/portfolio-benchmark.md >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Upload experiment evidence
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: four-layer-${{ steps.arm.outputs.arm_id }}-${{ github.run_number }}
-          path: reports/four-layer-experiment
+          path: |
+            reports/four-layer-experiment
+            reports/four-layer-tournament
           if-no-files-found: error
           retention-days: 90
