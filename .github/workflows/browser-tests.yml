@@ -16,9 +16,9 @@ concurrency:
 
 jobs:
   browser:
-    name: Browser E2E / Node 24
+    name: Playwright Browser E2E / Node 24
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
@@ -33,30 +33,17 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Resolve Chromium-compatible browser
-        shell: bash
-        run: |
-          set -euo pipefail
-          browser_path="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
-          if [[ -z "$browser_path" ]]; then
-            echo "::error::No Chromium-compatible browser was found on the runner."
-            exit 1
-          fi
-          echo "CHROMIUM_PATH=$browser_path" >> "$GITHUB_ENV"
-          "$browser_path" --version
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Prepare evidence directories
         run: |
-          rm -rf allure-results allure-report
+          rm -rf allure-results allure-report playwright-report test-results
           mkdir -p reports
 
-      - name: Run browser E2E tests with Allure
+      - name: Run Playwright browser E2E with Allure
         id: tests
         continue-on-error: true
-        env:
-          REQUIRE_BROWSER: "1"
-          ALLURE_NODE_TEST_CONFIG: >-
-            {"resultsDir":"allure-results","globalLabels":{"layer":"browser-e2e","repository":"${{ github.repository }}"},"environmentInfo":{"node":"24","runner":"ubuntu-latest"}}
         run: |
           set -o pipefail
           npm run test:browser:allure 2>&1 | tee reports/browser-tests.log
@@ -73,6 +60,8 @@ jobs:
           path: |
             allure-results
             allure-report
+            playwright-report
+            test-results/playwright
             reports/browser-tests.log
           if-no-files-found: warn
           retention-days: 14
@@ -81,12 +70,12 @@ jobs:
         if: always()
         run: |
           {
-            echo "## Browser E2E evidence"
+            echo "## Playwright browser E2E evidence"
             echo ""
-            echo "- Browser: \`$CHROMIUM_PATH\`"
+            echo "- Browser: Playwright-managed Chromium"
             echo "- Test command: \`npm run test:browser:allure\`"
-            echo "- Raw log: \`reports/browser-tests.log\`"
-            echo "- Allure results and HTML report are attached to this workflow run."
+            echo "- Locator policy: accessible role/label first; CSS/XPath layout selectors are not used."
+            echo "- Failure evidence: Playwright trace, screenshot, video, raw log, and Allure output."
             echo "- Test outcome: \`${{ steps.tests.outcome }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
