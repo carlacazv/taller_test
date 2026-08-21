@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Evidence-driven comparison of all 15 non-empty combinations of Unit, Integration, E2E API, and E2E UI testing.">
+  <title>Test Layer Lab — 15-Portfolio Decision</title>
+  <link rel="stylesheet" href="./portfolio-analysis.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./">Test Layer Lab</a>
+    <nav aria-label="Portfolio analysis navigation">
+      <a href="#decision">Decision</a>
+      <a href="#tradeoff">Coverage × cost</a>
+      <a href="#portfolios">15 portfolios</a>
+      <a href="#method">Method</a>
+      <a href="./allure/">Allure</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero shell" id="decision">
+      <div class="hero-copy">
+        <p class="eyebrow">Four-layer portfolio experiment</p>
+        <h1>15 portfolios. 20 realistic mutants. One quality-first decision rule.</h1>
+        <p class="lead">We tested every non-empty combination of Unit, Integration, E2E API, and E2E UI to answer one question: which portfolio preserves the defect-detection ceiling at the lowest measured execution cost?</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#tradeoff">See the evidence</a>
+          <a class="button" href="./evidence/four-layer-portfolio-comparison.json">Download JSON</a>
+          <a class="button" href="https://github.com/carlacazv/test-layer-lab/actions/runs/32532762892">Open benchmark run</a>
+        </div>
+      </div>
+
+      <aside class="winner-card" aria-label="Winning portfolio">
+        <span class="winner-label">Selected portfolio</span>
+        <h2>E2E API + E2E UI</h2>
+        <p>Backend behavior stays at the public API boundary. Playwright stays focused on browser-exclusive risk.</p>
+        <dl>
+          <div><dt>Mutation detection</dt><dd>20/20 · 100%</dd></div>
+          <div><dt>Same-run median</dt><dd>2.50 s</dd></div>
+          <div><dt>vs. UI-only</dt><dd>31.4% faster</dd></div>
+          <div><dt>Benign controls</dt><dd>2/2 survived</dd></div>
+        </dl>
+      </aside>
+    </section>
+
+    <section class="shell headline-grid" aria-label="Experiment headline numbers">
+      <article><span>Portfolios compared</span><strong>15</strong><small>every non-empty combination of four layers</small></article>
+      <article><span>Realistic mutants</span><strong>20</strong><small>6 domain · 4 API · 10 browser</small></article>
+      <article><span>Full-detection portfolios</span><strong>8</strong><small>runtime compared only after the 100% quality gate</small></article>
+      <article><span>UI-only relative cost</span><strong>24.98×</strong><small>against Unit-only in the same-run tournament</small></article>
+    </section>
+
+    <section class="shell section" id="layers">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">What was combined</p>
+          <h2>Four different seams, not four synonyms for “test”.</h2>
+        </div>
+        <p>The experiment separates where a defect is observed from how expensive that observation is.</p>
+      </div>
+      <div class="layer-grid">
+        <article><span>01</span><h3>Unit</h3><p>Business rules, calculations, validation, boundaries.</p></article>
+        <article><span>02</span><h3>Integration</h3><p>HTTP contract, authorization, status codes, error payloads.</p></article>
+        <article><span>03</span><h3>E2E API</h3><p>Complete deployed backend behavior through the public HTTP boundary.</p></article>
+        <article><span>04</span><h3>E2E UI</h3><p>Real Chromium execution for DOM, client JavaScript, accessibility, and browser/network wiring.</p></article>
+      </div>
+    </section>
+
+    <section class="shell section" id="tradeoff">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Coverage × execution cost</p>
+          <h2>First preserve quality. Then optimize cost.</h2>
+        </div>
+        <p>Mutation score is the gate. Runtime is a tie-breaker only among portfolios that reach the same 20/20 ceiling.</p>
+      </div>
+
+      <div class="chart-panel">
+        <div class="legend" aria-label="Chart legend">
+          <span><i class="dot winner-dot"></i> Selected</span>
+          <span><i class="dot full-dot"></i> 100% detection</span>
+          <span><i class="dot rejected-dot"></i> Detection loss</span>
+        </div>
+        <div id="scatter" class="scatter" role="img" aria-label="Mutation score versus median runtime for all 15 portfolios"></div>
+        <p class="chart-note">Lower runtime is better. Higher mutation detection is better. The selected portfolio is the left-most point on the 100% detection line under the current benchmark protocol.</p>
+      </div>
+
+      <div class="explain-grid">
+        <article class="explain positive">
+          <p class="eyebrow">Why the winner works</p>
+          <h3>Move backend confidence out of the browser.</h3>
+          <p>E2E API kills domain and API mutations through the real public boundary. Playwright then spends its cost only on browser-exclusive failures. The portfolio keeps 20/20 detection without paying UI cost for every lower-level rule.</p>
+        </article>
+        <article class="explain warning">
+          <p class="eyebrow">Why UI-only loses</p>
+          <h3>100% coverage can still be inefficient.</h3>
+          <p>E2E UI only also killed 20/20 mutants, but its same-run median was <strong>3.64 s</strong> versus <strong>2.50 s</strong> for E2E API + E2E UI — a <strong>31.4% median reduction</strong> with the same mutation ceiling.</p>
+        </article>
+        <article class="explain neutral">
+          <p class="eyebrow">Why backend-only loses</p>
+          <h3>Fast is not enough if risk disappears.</h3>
+          <p>The strongest backend-only portfolios stopped at <strong>10/20</strong>. Ten browser-specific mutants survived, so their lower runtime cannot make them candidates for the final architecture.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="shell section" id="portfolios">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Complete lattice</p>
+          <h2>Every possible portfolio, measured.</h2>
+        </div>
+        <p>Filter the table to inspect the 100% detection frontier or the portfolios rejected before runtime was considered.</p>
+      </div>
+      <div class="filters" role="group" aria-label="Portfolio table filters">
+        <button type="button" class="filter active" data-filter="all">All 15</button>
+        <button type="button" class="filter" data-filter="full">100% detection</button>
+        <button type="button" class="filter" data-filter="rejected">Detection loss</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Portfolio</th><th>Mutation</th><th>Median</th><th>p95</th><th>Relative cost</th><th>vs winner</th><th>Decision</th><th>PR</th></tr></thead>
+          <tbody id="portfolio-table"><tr><td colspan="8">Loading portfolio evidence…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="shell section" id="method">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Decision protocol</p>
+          <h2>The winner was chosen by a rule defined before looking at the ranking.</h2>
+        </div>
+        <p>This prevents a fast but weak portfolio from being declared “better” simply because it costs less.</p>
+      </div>
+      <ol class="decision-steps">
+        <li><strong>1. Maximize realistic-mutant detection.</strong><span>Any portfolio below 20/20 is eliminated, regardless of speed.</span></li>
+        <li><strong>2. Keep benign controls stable.</strong><span>Both semantically harmless controls must survive so brittle tests are not rewarded.</span></li>
+        <li><strong>3. Compare equal-quality candidates on one runner.</strong><span>One warmup + five measured rounds, with rotating portfolio order, in the same GitHub Actions job.</span></li>
+        <li><strong>4. Choose the lowest median.</strong><span>E2E API + E2E UI had the lowest same-run median among the eight 100%-detection portfolios.</span></li>
+      </ol>
+
+      <div class="caveat">
+        <strong>Interpretation boundary</strong>
+        <p>The winner is the best portfolio <em>under this repository, mutant panel, runner, and protocol</em>. Its median advantage over Unit + Integration + E2E UI is only about 1.3%, and the measured ranges overlap. That small gap should be re-measured with more iterations before claiming a universal performance law. The much larger UI-only penalty is the stronger architectural signal.</p>
+      </div>
+
+      <div class="provenance">
+        <div><span>Benchmark run</span><a href="https://github.com/carlacazv/test-layer-lab/actions/runs/32532762892">#32532762892</a></div>
+        <div><span>Benchmark commit</span><code>8ae9dbbd6330…</code></div>
+        <div><span>Timing protocol</span><strong>1 warmup + 5 rounds</strong></div>
+        <div><span>Order control</span><strong>Rotating per round</strong></div>
+      </div>
+    </section>
+
+    <section class="shell section resources">
+      <div><p class="eyebrow">Verify the evidence</p><h2>The dashboard is an explanation layer, not the source of truth.</h2></div>
+      <div class="resource-links">
+        <a href="./evidence/four-layer-portfolio-comparison.json"><strong>Comparison JSON</strong><span>Machine-readable decision dataset</span></a>
+        <a href="https://github.com/carlacazv/test-layer-lab/actions/runs/32532762892"><strong>Same-run tournament</strong><span>Runtime ranking workflow</span></a>
+        <a href="https://github.com/carlacazv/test-layer-lab/pulls"><strong>15 experiment PRs</strong><span>Independent mutation evidence arms</span></a>
+        <a href="./allure/"><strong>Allure report</strong><span>Test-execution evidence</span></a>
+        <a href="https://github.com/carlacazv/test-layer-lab"><strong>Repository</strong><span>Tests, runners, mutants, and CI</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer><div class="shell"><strong>Test Layer Lab</strong><span>Evidence before test-architecture opinions.</span></div></footer>
+  <script src="./portfolio-analysis.js"></script>
+</body>
+</html>
