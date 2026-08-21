@@ -1,0 +1,5 @@
+{
+  "id": "e2e-ui-only",
+  "title": "E2E UI only",
+  "layers": ["e2e-ui"]
+}
